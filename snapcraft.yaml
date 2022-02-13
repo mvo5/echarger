@@ -1,0 +1,21 @@
+name: eloader-mvo
+summary: An automatic e-car charger that balances with solar
+description: |
+      Use solarmax solar and a go-e to optimally charge e-cars.
+version: git
+grade: stable
+base: core20
+
+apps:
+  eloader-mvo:
+    command: bin/eloader
+    daemon: simple
+    plugs: ["network-bind"]
+
+parts:
+  eloader:
+    plugin: python
+    requirements: ["requirements.txt"]
+    source: .
+
+
