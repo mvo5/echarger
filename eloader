@@ -36,6 +36,7 @@ if __name__ == "__main__":
         except smaxsmt.ModbusConnectionError:
             RETRY_WAIT = 60
             print("cannot connect, will retry in {}s".format(RETRY_WAIT))
+            sys.stdout.flush()
             time.sleep(RETRY_WAIT)
             continue
         print(
