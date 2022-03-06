@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
         # sleep *long* in the night
         now = datetime.datetime.now()
-        if now.hour > 20 or now.hour < 6:
-            print("night mode, sleeping for 30min ({})".format(now))
+        if now.hour >= 20 or now.hour < 6:
+            print("night mode, sleeping for 30min ({})".format(now), flush=True)
             time.sleep(30 * 60 * 60)
 
         current_power_charger = goe.power
@@ -35,8 +35,7 @@ if __name__ == "__main__":
             current_solar_power = smax.current_power
         except smaxsmt.ModbusConnectionError:
             RETRY_WAIT = 60
-            print("cannot connect, will retry in {}s".format(RETRY_WAIT))
-            sys.stdout.flush()
+            print("cannot connect, will retry in {}s".format(RETRY_WAIT), flush=True)
             time.sleep(RETRY_WAIT)
             continue
         print(
@@ -65,8 +64,7 @@ if __name__ == "__main__":
             current_ampere = next_amp
         else:
             print("staying at {} amp".format(current_ampere))
-        print()
-        sys.stdout.flush()
+        print(flush=True)
         # wait a bit
         # empirically anything less than 360s here will mean no more
         # data is sent to maxmonitoring.solarmax.com for unknown reasons
