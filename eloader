@@ -28,7 +28,7 @@ if __name__ == "__main__":
         now = datetime.datetime.now()
         if now.hour >= 20 or now.hour < 6:
             print("night mode, sleeping for 30min ({})".format(now), flush=True)
-            time.sleep(30 * 60 * 60)
+            time.sleep(30 * 60)
 
         current_power_charger = goe.power
         try:
