@@ -36,7 +36,8 @@ if __name__ == "__main__":
                 "got {}/{}, expected {}/{}) sleeping until car "
                 "disconnects".format(
                     goe.ampere, goe.phases, current_ampere, current_phases
-                )
+                ),
+                flush=True,
             )
             time.sleep(5 * 60)
             continue
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         if now.hour >= 20 or now.hour < 6:
             print("night mode, sleeping for 30min ({})".format(now), flush=True)
             if not goe.force_pause:
-                print("evening mode: force pause (wasn't already?)")
+                print("evening mode: force pause (wasn't already?)", flush=True)
                 goe.force_pause = True
             time.sleep(30 * 60)
 
