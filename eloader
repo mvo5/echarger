@@ -11,6 +11,7 @@ SOLAR = "192.168.178.155"
 GO_E = "192.168.178.109"
 
 
+
 if __name__ == "__main__":
     smax = smaxsmt.SolarmaxSmt(SOLAR)
     goe = goeapi.GoeAPI(GO_E)
@@ -19,12 +20,23 @@ if __name__ == "__main__":
     current_ampere = goe.ampere
     while True:
         # XXX: detect car and do nothing if no car(?)
-        # XXX2: detect manual user override (e.g. via app) and do nothing
-        # when this happens
         # XXX3: telegram integration?
         # XXX4: support for 1-3 phases
 
-        # sleep *long* in the night
+        # detect if the the user manually overrode the automatic
+        # settings, e.g. to load faster - just do nothing then unti
+        # the car is disconnected
+        car_connected = goe.car_connected
+        if (car_connected and (
+                current_ampere != goe.ampere or current_phases != goe.phases)):
+            print("ampere or phases got manually overriden")
+            print(" got {}/{}, expected {}/{}) sleeping until car "
+                  "disconnects".format(
+                      goe.ampere,goe.phases, current_ampere, current_phases))
+            time.sleep(5*60)
+            continue
+
+        # sleep *long* in the night and ensure that we not accidentally load
         now = datetime.datetime.now()
         if now.hour >= 20 or now.hour < 6:
             print("night mode, sleeping for 30min ({})".format(now), flush=True)
