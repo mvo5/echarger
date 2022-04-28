@@ -11,7 +11,6 @@ SOLAR = "192.168.178.155"
 GO_E = "192.168.178.109"
 
 
-
 if __name__ == "__main__":
     smax = smaxsmt.SolarmaxSmt(SOLAR)
     goe = goeapi.GoeAPI(GO_E)
@@ -27,13 +26,19 @@ if __name__ == "__main__":
         # settings, e.g. to load faster - just do nothing then unti
         # the car is disconnected
         car_connected = goe.car_connected
-        if (car_connected and (
-                current_ampere != goe.ampere or current_phases != goe.phases)):
-            print("ampere or phases got manually overriden")
-            print(" got {}/{}, expected {}/{}) sleeping until car "
-                  "disconnects".format(
-                      goe.ampere,goe.phases, current_ampere, current_phases))
-            time.sleep(5*60)
+        if (
+            not goe.force_pause
+            and car_connected
+            and (current_ampere != goe.ampere or current_phases != goe.phases)
+        ):
+            print(
+                "ampere or phases got manually overriden "
+                "got {}/{}, expected {}/{}) sleeping until car "
+                "disconnects".format(
+                    goe.ampere, goe.phases, current_ampere, current_phases
+                )
+            )
+            time.sleep(5 * 60)
             continue
 
         # sleep *long* in the night and ensure that we not accidentally load
@@ -51,7 +56,7 @@ if __name__ == "__main__":
         except (smaxsmt.ModbusConnectionError, AttributeError):
             # XXX: deal with the attribute error in the high layers
             #
-            #Traceback (most recent call last):
+            # Traceback (most recent call last):
             #  File "/snap/eloader-mvo/56/bin/eloader", line 35, in <module>
             #    current_solar_power = smax.current_power
             #  File "/snap/eloader-mvo/56/lib/python3.8/site-packages/smaxsmt.py", line 62, in current_power
@@ -60,7 +65,7 @@ if __name__ == "__main__":
             #    val = reg.output(mc)
             #  File "/snap/eloader-mvo/56/lib/python3.8/site-packages/smaxsmt.py", line 20, in output
             #    if len(reg.registers) == 1:
-            #AttributeError: 'ModbusIOException' object has no attribute 'registers'
+            # AttributeError: 'ModbusIOException' object has no attribute 'registers'
             RETRY_WAIT = 60
             print("cannot connect, will retry in {}s".format(RETRY_WAIT), flush=True)
             time.sleep(RETRY_WAIT)
