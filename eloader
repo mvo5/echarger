@@ -3,10 +3,12 @@
 import datetime
 import time
 
+
+import astral
+
 import goeapi
 import smaxsmt
 
-from sunrise import get_sunrise_sunset
 
 # XXX make configurable
 SOLAR = "192.168.178.155"
@@ -14,6 +16,13 @@ GO_E = "192.168.178.109"
 
 # XXX make configurable
 CITY = "Berlin"
+
+
+def get_sunrise_sunset(city, date=None):
+    a = astral.Astral()
+    city = a[city]
+    sun = city.sun(local=True, date=date)
+    return sun["sunrise"], sun["sunset"]
 
 
 if __name__ == "__main__":
