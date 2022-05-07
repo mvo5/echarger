@@ -3,7 +3,7 @@
 import datetime
 import unittest
 
-from sunrise import get_sunrise_sunset
+from eloader import get_sunrise_sunset
 
 
 class TestSunsetDawn(unittest.TestCase):
