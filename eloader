@@ -6,8 +6,13 @@ import time
 import goeapi
 import smaxsmt
 
+
+# XXX make configurable
 SOLAR = "192.168.178.155"
 GO_E = "192.168.178.109"
+
+# XXX make configurable
+CITY = "Berlin"
 
 
 if __name__ == "__main__":
