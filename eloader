@@ -21,8 +21,8 @@ CITY = "Berlin"
 def get_sunrise_sunset(city, date=None):
     a = astral.Astral()
     city = a[city]
-    sun = city.sun(local=True, date=date)
-    return sun["sunrise"], sun["sunset"]
+    sun = city.sun(date=date)
+    return sun["sunrise"].time(), sun["sunset"].time()
 
 
 if __name__ == "__main__":
@@ -57,9 +57,9 @@ if __name__ == "__main__":
             continue
 
         # sleep *long* in the night and ensure that we not accidentally load
-        sunrise, sunset = get_sunrise_sunset()
-        now = datetime.datetime.now()
-        if now > sunset or now.hour < sunrise:
+        sunrise, sunset = get_sunrise_sunset(CITY)
+        now = datetime.datetime.now().time()
+        if now > sunset or now < sunrise:
             print("night mode, sleeping for 10min ({})".format(now), flush=True)
             if not goe.force_pause:
                 print("evening mode: force pause (wasn't already?)", flush=True)
