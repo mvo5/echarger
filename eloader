@@ -6,6 +6,7 @@ import time
 import goeapi
 import smaxsmt
 
+from sunrise import get_sunrise_sunset
 
 # XXX make configurable
 SOLAR = "192.168.178.155"
@@ -47,13 +48,14 @@ if __name__ == "__main__":
             continue
 
         # sleep *long* in the night and ensure that we not accidentally load
+        sunrise, sunset = get_sunrise_sunset()
         now = datetime.datetime.now()
-        if now.hour >= 20 or now.hour < 6:
-            print("night mode, sleeping for 30min ({})".format(now), flush=True)
+        if now > sunset or now.hour < sunrise:
+            print("night mode, sleeping for 10min ({})".format(now), flush=True)
             if not goe.force_pause:
                 print("evening mode: force pause (wasn't already?)", flush=True)
                 goe.force_pause = True
-            time.sleep(30 * 60)
+            time.sleep(10 * 60)
 
         current_power_charger = goe.power
         try:
