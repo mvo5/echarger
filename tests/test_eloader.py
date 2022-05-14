@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import mock
+import datetime
 import unittest
 
 import eloader
@@ -12,6 +13,9 @@ class TestEloader(unittest.TestCase):
         self.el.goe = mock.Mock(eloader.goeapi.GoeAPI)
         self.el.smax = mock.Mock(eloader.smaxsmt.SolarmaxSmt)
         self.el.log = mock.Mock()
+        self.el.now = mock.Mock()
+        # mock mid-day
+        self.el.now.return_value = datetime.time(12, 0, 0)
 
     def test_eloader_will_pause_when_not_enough_power(self):
         # pretent we are at 6kw at the loader
