@@ -46,14 +46,7 @@ class EloaderController:
     def now(self):
         return datetime.datetime.now().time()
 
-    def tick(self):
-        smax = self.smax
-        goe = self.goe
-
-        # XXX: detect car and do nothing if no car(?)
-        # XXX3: telegram integration?
-        # XXX4: support for 1-3 phases
-
+    def manual_overriden(self):
         # Detect if the the user manually overrode the automatic
         # settings, e.g. to load faster - just do nothing then until
         # the car is disconnected.
@@ -65,18 +58,34 @@ class EloaderController:
         # during the night. This means that one cannot manually override
         # with 6A/1ph but that is a bit of a pointless setting for a manual
         # override anyway.
-        car_connected = goe.car_connected
-        if (
-            not goe.force_pause
-            and car_connected
-            and (self.current_ampere != 6 and self.current_phases != 1)
-            and (self.current_ampere != goe.ampere or self.current_phases != goe.phases)
-        ):
+        if self.goe.force_pause:
+            return False
+        if not self.goe.car_connected:
+            return False
+        # heuristic, see above
+        if self.current_ampere == 6 and self.current_phase == 1:
+            return False
+        # ampere/phases differ from what eloader set, this means
+        # user overrode them
+        return (
+            self.current_ampere != self.goe.ampere
+            or self.current_phases != self.goe.phases
+        )
+
+    def tick(self):
+        # XXX: detect car and do nothing if no car(?)
+        # XXX3: telegram integration?
+        # XXX4: support for 1-3 phases
+
+        if self.manual_overriden():
             self.log(
                 "ampere or phases got manually overriden "
                 "got {}/{}, expected {}/{}) sleeping until car "
                 "disconnects".format(
-                    goe.ampere, goe.phases, self.current_ampere, self.current_phases
+                    self.goe.ampere,
+                    self.goe.phases,
+                    self.current_ampere,
+                    self.current_phases,
                 )
             )
             return 5 * 60
@@ -86,14 +95,14 @@ class EloaderController:
         now = self.now()
         if now > sunset or now < sunrise:
             self.log("night mode, sleeping for 10min ({})".format(now))
-            if not goe.force_pause:
+            if not self.goe.force_pause:
                 self.log("evening mode: force pause (wasn't already?)")
-                goe.force_pause = True
+                self.goe.force_pause = True
             return 10 * 60
 
-        current_power_charger = goe.power
+        current_power_charger = self.goe.power
         try:
-            current_solar_power = smax.current_power
+            current_solar_power = self.smax.current_power
         except (smaxsmt.ModbusConnectionError, AttributeError):
             # XXX: deal with the attribute error in the high layers
             #
@@ -125,12 +134,12 @@ class EloaderController:
         if self.current_ampere != next_amp:
             if next_amp is None:
                 self.log("not enough power, forcing pause")
-                goe.force_pause = True
+                self.goe.force_pause = True
             if next_amp is not None:
-                if goe.force_pause:
+                if self.goe.force_pause:
                     self.log("enough power, un-pause")
-                    goe.force_pause = False
-                goe.ampere = next_amp
+                    self.goe.force_pause = False
+                self.goe.ampere = next_amp
                 new_kw = 220 * next_amp * self.current_phases / 1000.0
                 self.log("switched to {} amp ({} kW)".format(next_amp, new_kw))
             self.current_ampere = next_amp
