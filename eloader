@@ -18,15 +18,9 @@ GO_E = "192.168.178.109"
 CITY = "Berlin"
 
 
-def get_sunrise_sunset(city, date=None):
-    a = astral.Astral()
-    city = a[city]
-    sun = city.sun(date=date)
-    return sun["sunrise"].time(), sun["sunset"].time()
-
-
 class EloaderController:
-    def __init__(self):
+    def __init__(self, city=CITY):
+        self.city = city
         self.smax = smaxsmt.SolarmaxSmt(SOLAR)
         self.goe = goeapi.GoeAPI(GO_E)
         self.current_phases = self.goe.phases
@@ -44,7 +38,7 @@ class EloaderController:
         print(*args, flush=True)
 
     def now(self):
-        return datetime.datetime.now().time()
+        return datetime.datetime.now()
 
     def manual_overriden(self):
         # Detect if the the user manually overrode the automatic
@@ -72,6 +66,15 @@ class EloaderController:
             or self.current_phases != self.goe.phases
         )
 
+    def night_time(self):
+        a = astral.Astral()
+        city = a[self.city]
+        sun = city.sun(date=self.now().date())
+        sunrise = sun["sunrise"].time()
+        sunset = sun["sunset"].time()
+        now = self.now().time()
+        return now > sunset or now < sunrise
+
     def tick(self):
         # XXX: detect car and do nothing if no car(?)
         # XXX3: telegram integration?
@@ -91,10 +94,8 @@ class EloaderController:
             return 5 * 60
 
         # sleep *long* in the night and ensure that we not accidentally load
-        sunrise, sunset = get_sunrise_sunset(CITY)
-        now = self.now()
-        if now > sunset or now < sunrise:
-            self.log("night mode, sleeping for 10min ({})".format(now))
+        if self.night_time():
+            self.log("night mode, sleeping for 10min")
             if not self.goe.force_pause:
                 self.log("evening mode: force pause (wasn't already?)")
                 self.goe.force_pause = True

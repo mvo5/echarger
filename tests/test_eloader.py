@@ -15,7 +15,7 @@ class TestEloader(unittest.TestCase):
         self.el.log = mock.Mock()
         self.el.now = mock.Mock()
         # mock mid-day
-        self.el.now.return_value = datetime.time(12, 0, 0)
+        self.el.now.return_value = datetime.datetime(2022, 5, 14, 12, 0, 0)
 
     def test_eloader_will_pause_when_not_enough_power(self):
         # pretent we are at 6kw at the loader
@@ -45,3 +45,20 @@ class TestEloader(unittest.TestCase):
             self.el.current_phases = 1
             self.el.goe.phases = 1
             self.assertEqual(self.el.manual_overriden(), t["exp"], msg=t)
+
+    def test_eloader_night_time(self):
+        # midday
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 12, 0, 0)
+        self.assertEqual(self.el.night_time(), False)
+        # deep night
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 23, 0, 0)
+        self.assertEqual(self.el.night_time(), True)
+        # sunrise Berlin 2022-05-07 is 05:24, sunset 20:41
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 5, 20, 0)
+        self.assertEqual(self.el.night_time(), True)
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 5, 30, 0)
+        self.assertEqual(self.el.night_time(), False)
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 20, 40, 0)
+        self.assertEqual(self.el.night_time(), False)
+        self.el.now.return_value = datetime.datetime(2022, 5, 7, 20, 45, 0)
+        self.assertEqual(self.el.night_time(), True)
