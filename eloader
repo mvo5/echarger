@@ -38,6 +38,12 @@ class EloaderController:
             # data is sent to maxmonitoring.solarmax.com for unknown reasons
             time.sleep(sleeptime)
 
+    def log(self, *args):
+        print(*args, flush=True)
+
+    def now(self):
+        return datetime.datetime.now().time()
+
     def tick(self):
         smax = self.smax
         goe = self.goe
@@ -66,23 +72,22 @@ class EloaderController:
             and (current_ampere != 6 and current_phases != 1)
             and (current_ampere != goe.ampere or current_phases != goe.phases)
         ):
-            print(
+            self.log(
                 "ampere or phases got manually overriden "
                 "got {}/{}, expected {}/{}) sleeping until car "
                 "disconnects".format(
                     goe.ampere, goe.phases, current_ampere, current_phases
                 ),
-                flush=True,
             )
             return 5 * 60
 
         # sleep *long* in the night and ensure that we not accidentally load
         sunrise, sunset = get_sunrise_sunset(CITY)
-        now = datetime.datetime.now().time()
+        now = self.now()
         if now > sunset or now < sunrise:
-            print("night mode, sleeping for 10min ({})".format(now), flush=True)
+            self.log("night mode, sleeping for 10min ({})".format(now))
             if not goe.force_pause:
-                print("evening mode: force pause (wasn't already?)", flush=True)
+                self.log("evening mode: force pause (wasn't already?)")
                 goe.force_pause = True
             return 10 * 60
 
@@ -103,9 +108,9 @@ class EloaderController:
             #    if len(reg.registers) == 1:
             # AttributeError: 'ModbusIOException' object has no attribute 'registers'
             RETRY_WAIT = 60
-            print("cannot connect, will retry in {}s".format(RETRY_WAIT), flush=True)
+            self.log("cannot connect, will retry in {}s".format(RETRY_WAIT))
             return RETRY_WAIT
-        print(
+        self.log(
             "{} solar / charger {} kW".format(
                 current_solar_power, current_power_charger / 1000.0
             )
@@ -119,19 +124,18 @@ class EloaderController:
             next_amp = amp
         if current_ampere != next_amp:
             if next_amp is None:
-                print("not enough power, forcing pause")
+                self.log("not enough power, forcing pause")
                 goe.force_pause = True
             if next_amp is not None:
                 if goe.force_pause:
-                    print("enough power, un-pause")
+                    self.log("enough power, un-pause")
                     goe.force_pause = False
                 goe.ampere = next_amp
                 new_kw = 220 * next_amp * current_phases / 1000.0
-                print("switched to {} amp ({} kW)".format(next_amp, new_kw))
+                self.log("switched to {} amp ({} kW)".format(next_amp, new_kw))
             current_ampere = next_amp
         else:
-            print("staying at {} amp".format(current_ampere))
-        print(flush=True)
+            self.log("staying at {} amp".format(current_ampere))
         return 360
 
 
