@@ -104,7 +104,9 @@ if __name__ == "__main__":
                 #    if len(reg.registers) == 1:
                 # AttributeError: 'ModbusIOException' object has no attribute 'registers'
                 RETRY_WAIT = 60
-                print("cannot connect, will retry in {}s".format(RETRY_WAIT), flush=True)
+                print(
+                    "cannot connect, will retry in {}s".format(RETRY_WAIT), flush=True
+                )
                 time.sleep(RETRY_WAIT)
                 continue
             print(
