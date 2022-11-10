@@ -25,6 +25,7 @@ class EloaderController:
         self.goe = goeapi.GoeAPI(GO_E)
         self.current_phases = self.goe.phases
         self.current_ampere = self.goe.ampere
+        self.last_solarmax_connect = 0.0
 
     def loop(self):
         while True:
@@ -93,6 +94,12 @@ class EloaderController:
             )
             return 5 * 60
 
+        # ensure to never overwhelm the solarmax API
+        if (time.time() - self.last_solarmax_connect) < 6 * 60:
+            extra_wait = 6 * 60 - (time.time() - self.last_solarmax_connect)
+            print(f"solarmax api called too often, sleeping for {extra_wait}")
+            return extra_wait
+
         # sleep *long* in the night and ensure that we not accidentally load
         if self.night_time():
             self.log("night mode, sleeping for 10min")
@@ -104,6 +111,7 @@ class EloaderController:
         current_power_charger = self.goe.power
         try:
             current_solar_power = self.smax.current_power
+            self.last_solarmax_connect = time.time()
         except (smaxsmt.ModbusConnectionError, AttributeError):
             # XXX: deal with the attribute error in the high layers
             #
