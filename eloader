@@ -29,7 +29,11 @@ class EloaderController:
 
     def loop(self):
         while True:
-            sleeptime = self.tick()
+            try:
+                sleeptime = self.tick()
+            except OSError as e:
+                print(f"network error {e}")
+                sleeptime = 60
             # wait a bit
             # empirically anything less than 360s here will mean no more
             # data is sent to maxmonitoring.solarmax.com for unknown reasons
