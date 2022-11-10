@@ -1,5 +1,5 @@
-requests
-pymodbus
+requests==2.22.0
+pymodbus==2.1.0
 astral==1.6
 git+https://github.com/mvo5/solarmax-smt.git
 git+https://github.com/mvo5/goe-py.git
