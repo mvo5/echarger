@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
-import mock
 import datetime
 import unittest
+from unittest.mock import Mock
 
 import eloader
 
@@ -10,10 +10,10 @@ import eloader
 class TestEloader(unittest.TestCase):
     def setUp(self):
         self.el = eloader.EloaderController()
-        self.el.goe = mock.Mock(eloader.goeapi.GoeAPI)
-        self.el.smax = mock.Mock(eloader.smaxsmt.SolarmaxSmt)
-        self.el.log = mock.Mock()
-        self.el.now = mock.Mock()
+        self.el.goe = Mock(eloader.goeapi.GoeAPI)
+        self.el.smax = Mock(eloader.smaxsmt.SolarmaxSmt)
+        self.el.log = Mock()
+        self.el.now = Mock()
         # mock mid-day
         self.el.now.return_value = datetime.datetime(2022, 5, 14, 12, 0, 0)
 
