@@ -2,15 +2,18 @@
 
 import datetime
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import eloader
 
 
 class TestEloader(unittest.TestCase):
-    def setUp(self):
+    @patch("eloader.goeapi.GoeAPI")
+    def setUp(self, mock_goe):
+        instance = mock_goe.return_value
+        instance.phases = 1
+        instance.ampere = 6
         self.el = eloader.EloaderController()
-        self.el.goe = Mock(eloader.goeapi.GoeAPI)
         self.el.smax = Mock(eloader.smaxsmt.SolarmaxSmt)
         self.el.log = Mock()
         self.el.now = Mock()
@@ -18,8 +21,8 @@ class TestEloader(unittest.TestCase):
         self.el.now.return_value = datetime.datetime(2022, 5, 14, 12, 0, 0)
 
     def test_eloader_will_pause_when_not_enough_power(self):
-        # pretent we are at 6kw at the loader
-        self.el.goe.power = 6
+        # pretent we are at 1.4kw at the loader
+        self.el.goe.power = 1.4
         self.el.goe.phases = 1
         self.el.goe.amere = 6
         # pretent 1kw from solar
@@ -42,7 +45,6 @@ class TestEloader(unittest.TestCase):
             self.el.goe.car_connected = t["con"]
             self.el.current_ampere = t["cur_amp"]
             self.el.goe.ampere = t["goe_amp"]
-            self.el.current_phases = 1
             self.el.goe.phases = 1
             self.assertEqual(self.el.manual_overriden(), t["exp"], msg=t)
 

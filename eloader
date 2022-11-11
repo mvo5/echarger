@@ -24,8 +24,8 @@ class EloaderController:
         self.smax = smaxsmt.SolarmaxSmt(SOLAR)
         self.goe = goeapi.GoeAPI(GO_E)
         self.last_solarmax_connect = 0.0
-        self.current_phases = None
-        self.current_ampere = None
+        self.current_phases = self.goe.phases
+        self.current_ampere = self.goe.ampere
 
     def loop(self):
         while True:
@@ -84,10 +84,6 @@ class EloaderController:
         # XXX: detect car and do nothing if no car(?)
         # XXX3: telegram integration?
         # XXX4: support for 1-3 phases
-        if self.current_phases is None:
-            self.current_phases = self.goe.phases
-        if self.current_ampere is None:
-            self.current_ampere = self.goe.ampere
 
         if self.manual_overriden():
             self.log(
