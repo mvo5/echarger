@@ -62,7 +62,7 @@ class EloaderController:
         if not self.goe.car_connected:
             return False
         # heuristic, see above
-        if self.current_ampere == 6 and self.current_phase == 1:
+        if self.current_ampere == 6 and self.current_phases == 1:
             return False
         # ampere/phases differ from what eloader set, this means
         # user overrode them
