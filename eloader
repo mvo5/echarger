@@ -64,6 +64,8 @@ class EloaderController:
         # heuristic, see above
         if self.current_ampere == 6 and self.current_phases == 1:
             return False
+        if self.current_ampere is None:
+            return False
         # ampere/phases differ from what eloader set, this means
         # user overrode them
         return (
