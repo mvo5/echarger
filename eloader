@@ -3,11 +3,8 @@
 import datetime
 import time
 
-
-import astral
-
 import goeapi
-import smaxsmt
+from energymon.energymon import EnergyMon
 
 
 # XXX make configurable
@@ -21,9 +18,9 @@ CITY = "Berlin"
 class EloaderController:
     def __init__(self, city=CITY):
         self.city = city
-        self.smax = smaxsmt.SolarmaxSmt(SOLAR)
+        self.mon = EnergyMon()
         self.goe = goeapi.GoeAPI(GO_E)
-        self.last_solarmax_connect = 0.0
+        self.last_connect = 0.0
         self.current_phases = self.goe.phases
         self.current_ampere = self.goe.ampere
 
@@ -35,8 +32,6 @@ class EloaderController:
                 print(f"network error {e}")
                 sleeptime = 60
             # wait a bit
-            # empirically anything less than 360s here will mean no more
-            # data is sent to maxmonitoring.solarmax.com for unknown reasons
             time.sleep(sleeptime)
 
     def log(self, *args):
@@ -73,15 +68,6 @@ class EloaderController:
             or self.current_phases != self.goe.phases
         )
 
-    def night_time(self):
-        a = astral.Astral()
-        city = a[self.city]
-        sun = city.sun(date=self.now().date())
-        sunrise = sun["sunrise"].time()
-        sunset = sun["sunset"].time()
-        now = self.now().time()
-        return now > sunset or now < sunrise
-
     def tick(self):
         # XXX: detect car and do nothing if no car(?)
         # XXX3: telegram integration?
@@ -100,50 +86,25 @@ class EloaderController:
             )
             return 5 * 60
 
-        # ensure to never overwhelm the solarmax API
-        if (time.time() - self.last_solarmax_connect) < 6 * 60:
-            extra_wait = 6 * 60 - (time.time() - self.last_solarmax_connect)
-            print(f"solarmax api called too often, sleeping for {extra_wait}")
+        # ensure to never overwhelm the API
+        if (time.time() - self.last_connect) < 6 * 60:
+            extra_wait = 6 * 60 - (time.time() - self.last_connect)
+            print(f"api called too often, sleeping for {extra_wait}")
             return extra_wait
 
-        # sleep *long* in the night and ensure that we not accidentally load
-        if self.night_time():
-            self.log("night mode, sleeping for 10min")
-            if not self.goe.force_pause:
-                self.log("evening mode: force pause (wasn't already?)")
-                self.goe.force_pause = True
-            return 10 * 60
-
         current_power_charger = self.goe.power
-        try:
-            current_solar_power = self.smax.current_power
-            self.last_solarmax_connect = time.time()
-        except (smaxsmt.ModbusConnectionError, AttributeError):
-            # XXX: deal with the attribute error in the high layers
-            #
-            # Traceback (most recent call last):
-            #  File "/snap/eloader-mvo/56/bin/eloader", line 35, in <module>
-            #    current_solar_power = smax.current_power
-            #  File "/.../smaxsmt.py", line 62, in current_power
-            #    return self._get(reg)
-            #  File "/.../smaxsmt.py", line 55, in _get
-            #    val = reg.output(mc)
-            #  File "/.../smaxsmt.py", line 20, in output
-            #    if len(reg.registers) == 1:
-            # AttributeError: 'ModbusIOException' object has no attribute 'registers'
-            RETRY_WAIT = 60
-            self.log("cannot connect, will retry in {}s".format(RETRY_WAIT))
-            return RETRY_WAIT
+        current_house_power = -self.mon.current.current_power
+        self.last_connect = time.time()
         self.log(
-            "{} solar / charger {} kW".format(
-                current_solar_power, current_power_charger / 1000.0
+            "{} house / charger {} kW".format(
+                current_house_power, current_power_charger / 1000.0
             )
         )
         # XXX: deal with 1->3 phase and vice versa
         next_amp = None
         for amp in [6, 10, 12, 14, 16]:
             pw = 220 * amp * self.current_phases / 1000.0
-            if pw > current_solar_power:
+            if pw > current_house_power:
                 break
             next_amp = amp
         if self.current_ampere != next_amp:
